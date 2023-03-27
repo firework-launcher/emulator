@@ -36,7 +36,7 @@ class SerialMGMT:
             read = self.master_file.read()
             if not read == None:
                 break
-            time.sleep(0.1)
+            time.sleep(0.01)
         return read
     def write_data(self, data):
         self.master_file.write(data) 
