@@ -1,9 +1,17 @@
 import serial_mgmt
 from flask import Flask, render_template
 import flask_socketio
+import argparse
 import threading
 
 serial = serial_mgmt.SerialMGMT()
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument('--host', type=str, help='Host emulator website on specific IP address', required=False)
+parser.add_argument('--port', type=int, help='Host emulator website on specific port', required=False)
+
+args = parser.parse_args()
 
 serial.create_port()
 
@@ -26,6 +34,12 @@ def home():
     return render_template('home.html', port=serial.port)
 
 if __name__ == '__main__':
-    print('Hosting website on http://localhost:3472')
     threading.Thread(target=handle_serial).start()
-    socketio.run(app, port=3472)
+    port = args.port
+    if port == None:
+        port = 3472
+    host = args.host
+    if host == None:
+        host='127.0.0.1'
+    print('Hosting website on http://{}:{}'.format(host, port))
+    socketio.run(app, host=host, port=port)
