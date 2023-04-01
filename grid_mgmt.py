@@ -25,7 +25,6 @@ class GridMGMT:
         else:
             width, height = original_res
         height -= self.y_offset
-        print(width, height)
         return width, height
 
     def create_surfaces(self, original_res=None):
