@@ -31,12 +31,7 @@ class SerialMGMT:
         while self.port == None:
             pass
         return self.port
-    def read_data(self):
-        while True:
-            read = self.master_file.read()
-            if not read == None:
-                break
-            time.sleep(0.01)
-        return read
+    def check_read(self):
+        return self.master_file.read()
     def write_data(self, data):
         self.master_file.write(data) 
