@@ -35,6 +35,43 @@ def blit_text(surface, text, font_size, pos, color=(255, 255, 255)):
         surface.blit(line_surface, (x, y))
         y += line_height
 
+def get_img_corners(x, y, w, h):
+    corners = {}
+    corners['top_left'] = (x-w/2, y-h/2)
+    corners['top_right'] = (x+w/2, y-h/2)
+    corners['bottom_left'] = (x-w/2, y+h/2)
+    corners['bottom_right'] = (x+w/2, y+h/2)
+    return corners
+
+def reset_button(x, y, pressed=False):
+    w = 100
+    h = 30
+    color = (255, 0, 0)
+    color_hover = (200, 0, 0)
+    color_fg = (255, 255, 255)
+    color_fg_hover = (220, 220, 220)
+    position = pygame.mouse.get_pos()
+    corners = get_img_corners(x, y, w, h)
+    if position[0] <= corners['top_right'][0] and position[0] >= corners['top_left'][0] and position[1] <= corners['bottom_left'][1] and position[1] >= corners['top_left'][1]:
+        if not pressed:
+            pygame.draw.rect(display, color_hover, pygame.Rect(x-w/2, y-h/2, w, h))
+            blit_text_center(display, x, y, 'Reset', 40, color_fg_hover)
+        else:
+            global pin_data
+            pin_data = []
+            for pin in range(32):
+                pin += 1
+                pin_data.append({
+                    'pin': pin,
+                    'state': 1,
+                    'launched': False
+                })
+            print('Pin Data Reset')
+    else:
+        if not pressed:
+            pygame.draw.rect(display, color, pygame.Rect(x-w/2, y-h/2, w, h))
+            blit_text_center(display, x, y, 'Reset', 40, color_fg_hover)
+
 running = True
 pygame.init()
 pygame.font.init()
@@ -50,6 +87,7 @@ while running:
     width, height = pygame.display.get_surface().get_size()
     read = serial.check_read()
     blit_text_center(display, width/2, 30, 'Serial port: {}'.format(serial.port), 40, (255, 255, 255))
+    reset_button(width/2+220, 30)
     for box in grid.box_surfaces:
         surface = grid.box_surfaces[box]
         surface.fill((64, 64, 64))
@@ -79,6 +117,8 @@ while running:
             running = False
         if event.type == pygame.VIDEORESIZE:
             grid.create_surfaces((event.w, event.h))
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            reset_button(width/2+220, 30, pressed=True)
     pygame.display.update()
 
 os.kill(os.getpid(), 9)
