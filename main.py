@@ -118,7 +118,7 @@ while running:
         if event.type == pygame.VIDEORESIZE:
             grid.create_surfaces((event.w, event.h))
         if event.type == pygame.MOUSEBUTTONDOWN:
-            reset_button(width/2+220, 30, pressed=True)
+            reset_button(width/2, 60, pressed=True)
     pygame.display.update()
 
 os.kill(os.getpid(), 9)
