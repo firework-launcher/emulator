@@ -120,9 +120,9 @@ while running:
             pin_data[int(pin)-1]['state'] = state
             if state == 0:
                 pin_data[int(pin)-1]['launched'] = True
-            serial.write_data(b'0')
+            serial.write_data(b'{"message": "Pin D' + pin.encode() + b' set to ' + str(state).encode() + b'", "id": "2", "name": "serial", "hardware": "emulator", "connected": true}')
         else:
-            serial.write_data(b'1')
+            serial.write_data(b'{"message": "Failed to set pin", "id": "2", "name": "serial", "hardware": "emulator", "connected": true}')
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
