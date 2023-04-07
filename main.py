@@ -86,7 +86,7 @@ while running:
     display.fill((64, 64, 64))
     width, height = pygame.display.get_surface().get_size()
     read = serial.check_read()
-    blit_text_center(display, width/2, 30, 'Run this command to start the launcher: python3 main.py {}'.format(serial.port), 30, (255, 255, 255))
+    blit_text_center(display, width/2, 30, 'Serial Port: {}'.format(serial.port), 30, (255, 255, 255))
     reset_button(width/2, 60)
     for box in grid.box_surfaces:
         surface = grid.box_surfaces[box]
