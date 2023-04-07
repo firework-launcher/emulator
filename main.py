@@ -6,7 +6,15 @@ import sys
 import os
 import grid_mgmt
 
-serial = serial_mgmt.SerialMGMT()
+
+serial_or_ip = input('Serial (s) or IP launcher (ip)?: ')
+if serial_or_ip == 's':
+    serial = serial_mgmt.SerialMGMT()
+elif serial_or_ip == 'ip':
+    serial = serial_mgmt.IPMGMT()
+else:
+    print('Invalid option')
+    exit(1)
 serial.create_port()
 pin_data = []
 
@@ -86,7 +94,10 @@ while running:
     display.fill((64, 64, 64))
     width, height = pygame.display.get_surface().get_size()
     read = serial.check_read()
-    blit_text_center(display, width/2, 30, 'Serial Port: {}'.format(serial.port), 30, (255, 255, 255))
+    if serial_or_ip == 's':
+        blit_text_center(display, width/2, 30, 'Serial Port: {}'.format(serial.port), 30, (255, 255, 255))
+    else:
+        blit_text_center(display, width/2, 30, 'IP: {}'.format(serial_mgmt.socket.gethostbyname(serial_mgmt.socket.gethostname())), 30, (255, 255, 255))
     reset_button(width/2, 60)
     for box in grid.box_surfaces:
         surface = grid.box_surfaces[box]
