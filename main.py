@@ -8,6 +8,7 @@ import grid_mgmt
 
 
 serial_or_ip = input('Serial (s) or IP launcher (ip)?: ')
+port_count = int(input('Port count: '))
 if serial_or_ip == 's':
     serial = serial_mgmt.SerialMGMT()
 elif serial_or_ip == 'ip':
@@ -18,7 +19,7 @@ else:
 serial.create_port()
 pin_data = []
 
-for pin in range(32):
+for pin in range(port_count):
     pin += 1
     pin_data.append({
         'pin': pin,
@@ -87,7 +88,7 @@ display = pygame.display.set_mode((800, 600))
 clock = pygame.time.Clock()
 
 grid = grid_mgmt.GridMGMT(pygame, display, 100)
-grid.create_surfaces()
+grid.create_surfaces(port_count)
 
 while running:
     clock.tick(60)
@@ -127,7 +128,7 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.VIDEORESIZE:
-            grid.create_surfaces((event.w, event.h))
+            grid.create_surfaces(port_count, (event.w, event.h))
         if event.type == pygame.MOUSEBUTTONDOWN:
             reset_button(width/2, 60, pressed=True)
     pygame.display.update()

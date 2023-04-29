@@ -8,10 +8,18 @@ class GridMGMT:
         self.grid_details = None
         self.box_surfaces = {}
     
-    def get_grid_details(self, resolution):
+    def closest_factors(self, num):
+        factors = []
+        for i in range(1, num + 1):
+            if num % i == 0:
+                factors.append(i)
+        middle = len(factors) // 2
+        return [factors[middle-1], factors[middle]] if len(factors) % 2 == 0 else [factors[middle], factors[middle]]
+ 
+
+    def get_grid_details(self, resolution, count):
         screen_width, screen_height = resolution
-        num_rows = 4
-        num_cols = 8
+        num_rows, num_cols = self.closest_factors(count)
         cell_size = (round(screen_width/num_cols), round(screen_height/num_rows))
         return {
             'cell_size': cell_size,
@@ -27,8 +35,8 @@ class GridMGMT:
         height -= self.y_offset
         return width, height
 
-    def create_surfaces(self, original_res=None):
-        grid_details = self.get_grid_details(self.get_resolution(original_res))
+    def create_surfaces(self, count, original_res=None):
+        grid_details = self.get_grid_details(self.get_resolution(original_res), count)
         self.grid_details = grid_details
         self.box_surfaces = {}
         x = 0
