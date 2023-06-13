@@ -68,7 +68,7 @@ def reset_button(x, y, pressed=False):
         else:
             global pin_data
             pin_data = []
-            for pin in range(32):
+            for pin in range(port_count):
                 pin += 1
                 pin_data.append({
                     'pin': pin,
@@ -114,16 +114,17 @@ while running:
         pygame.draw.rect(surface, (255, 255, 255), pygame.Rect((0, 0), grid.grid_details['cell_size']), 2)
     grid.draw_surfaces()
     if not read == None:
-        read = read.decode('utf-8')
-        if read.startswith('/digital'):
-            pin = str(int(read.split('/')[2])-1)
-            state = int(read.split('/')[3].replace('\r\n', ''))
-            pin_data[int(pin)-1]['state'] = state
-            if state == 0:
-                pin_data[int(pin)-1]['launched'] = True
-            serial.write_data(b'{"message": "Pin D' + pin.encode() + b' set to ' + str(state).encode() + b'", "id": "2", "name": "serial", "hardware": "emulator", "connected": true}')
-        else:
-            serial.write_data(b'{"message": "Failed to set pin", "id": "2", "name": "serial", "hardware": "emulator", "connected": true}')
+        read_full = read.decode('utf-8').split('\r\n')
+        for read in read_full:
+            if read.startswith('/digital'):
+                pin = str(int(read.split('/')[2])-1)
+                state = int(read.split('/')[3].replace('\r\n', ''))
+                pin_data[int(pin)-1]['state'] = state
+                if state == 0:
+                    pin_data[int(pin)-1]['launched'] = True
+                serial.write_data(b'{"message": "Pin D' + pin.encode() + b' set to ' + str(state).encode() + b'", "id": "2", "name": "serial", "hardware": "emulator", "connected": true}')
+            else:
+                serial.write_data(b'{"message": "Failed to set pin", "id": "2", "name": "serial", "hardware": "emulator", "connected": true}')
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False

@@ -51,7 +51,7 @@ class IPMGMT():
             self.port, addr = s.accept()
             while True:
                 try:
-                    self.newest_read = self.port.recv(1024)
+                    self.newest_read = self.port.recv(1048576)
                 except:
                     self.port.close()
                     self.port = None
