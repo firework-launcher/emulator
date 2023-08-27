@@ -1,6 +1,7 @@
 import emulator_io
 import argparse
 import pygame
+import pygame.freetype
 import time
 import sys
 import os
@@ -39,21 +40,19 @@ for pin in range(port_count):
     })
 
 def blit_text_center(display, x, y, text, font_size, color):
-    font = pygame.font.SysFont('Sans Serif', font_size)
-    text_surface = font.render(text, False, color)
-    text_rect = text_surface.get_rect()
+    font = pygame.freetype.SysFont('Sans Serif', font_size)
+    text_surface, text_rect = font.render(text, color)
     text_rect.center = (x, y)
-    display.blit(text_surface, text_rect)
+    display.blit(text_surface, text_rect.topleft)
 
 def blit_text(surface, text, font_size, pos, color=(255, 255, 255)):
-    font = pygame.font.SysFont('Sans Serif', font_size)
+    font = pygame.freetype.SysFont('Sans Serif', font_size)
     lines = text.split('\n')
     x, y = pos
     for line in lines:
-        line_surface = font.render(line, 0, color)
-        line_width, line_height = line_surface.get_size()
+        line_surface, line_rect = font.render(line, color)
         surface.blit(line_surface, (x, y))
-        y += line_height
+        y += line_rect.height
 
 def get_img_corners(x, y, w, h):
     corners = {}
@@ -75,7 +74,7 @@ def reset_button(x, y, pressed=False):
     if position[0] <= corners['top_right'][0] and position[0] >= corners['top_left'][0] and position[1] <= corners['bottom_left'][1] and position[1] >= corners['top_left'][1]:
         if not pressed:
             pygame.draw.rect(display, color_hover, pygame.Rect(x-w/2, y-h/2, w, h))
-            blit_text_center(display, x, y, 'Reset', 40, color_fg_hover)
+            blit_text_center(display, x, y, 'Reset', 25, color_fg_hover)
         else:
             pins.pin_data = []
             for pin in range(port_count):
@@ -92,7 +91,7 @@ def reset_button(x, y, pressed=False):
     else:
         if not pressed:
             pygame.draw.rect(display, color, pygame.Rect(x-w/2, y-h/2, w, h))
-            blit_text_center(display, x, y, 'Reset', 40, color_fg_hover)
+            blit_text_center(display, x, y, 'Reset', 25, color_fg_hover)
 
 running = True
 pygame.init()
@@ -108,16 +107,16 @@ while running:
     display.fill((64, 64, 64))
     width, height = pygame.display.get_surface().get_size()
     emulator.check_read()
-    blit_text_center(display, width/2, 30, emulator.top_msg, 30, (255, 255, 255))
+    blit_text_center(display, width/2, 25, emulator.top_msg, 25, (255, 255, 255))
     reset_button(width/2, 60)
 
     for box in grid.box_surfaces:
         surface = grid.box_surfaces[box]
         surface.fill((64, 64, 64))
         if pins.pin_data[box[2]-1]['on']:
-            blit_text_center(surface, grid.grid_details['cell_size'][0]/2, grid.grid_details['cell_size'][1]/4, 'Pin {}'.format(box[2]), 30, ((255, 255, 255)))
+            blit_text_center(surface, grid.grid_details['cell_size'][0]/2, grid.grid_details['cell_size'][1]/4, 'Pin {}'.format(box[2]), 25, ((255, 255, 255)))
             if pins.armed:
-                blit_text_center(surface, grid.grid_details['cell_size'][0]/2, grid.grid_details['cell_size'][1]/4*2, 'State: {}'.format(pins.pin_data[box[2]-1]['state']), 30, ((255, 255, 255)))
+                blit_text_center(surface, grid.grid_details['cell_size'][0]/2, grid.grid_details['cell_size'][1]/4*2, 'State: {}'.format(pins.pin_data[box[2]-1]['state']), 25, ((255, 255, 255)))
                 launched = pins.pin_data[box[2]-1]['launched']
                 if emutype == 'esp':
                     if not launched == False:
