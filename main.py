@@ -119,10 +119,16 @@ while running:
             if pins.armed:
                 blit_text_center(surface, grid.grid_details['cell_size'][0]/2, grid.grid_details['cell_size'][1]/4*2, 'State: {}'.format(pins.pin_data[box[2]-1]['state']), 30, ((255, 255, 255)))
                 launched = pins.pin_data[box[2]-1]['launched']
-                if launched:
-                    blit_text_center(surface, grid.grid_details['cell_size'][0]/2, grid.grid_details['cell_size'][1]/4*3, 'Launched: Yes', 20, ((0, 255, 0)))
+                if emutype == 'esp':
+                    if not launched == False:
+                        blit_text_center(surface, grid.grid_details['cell_size'][0]/2, grid.grid_details['cell_size'][1]/4*3, 'Launched: {}'.format(launched), 20, ((0, 255, 0)))
+                    else:
+                        blit_text_center(surface, grid.grid_details['cell_size'][0]/2, grid.grid_details['cell_size'][1]/4*3, 'Launched: No', 20, ((255, 0, 0)))
                 else:
-                    blit_text_center(surface, grid.grid_details['cell_size'][0]/2, grid.grid_details['cell_size'][1]/4*3, 'Launched: No', 20, ((255, 0, 0)))
+                    if launched:
+                        blit_text_center(surface, grid.grid_details['cell_size'][0]/2, grid.grid_details['cell_size'][1]/4*3, 'Launched: Yes', 20, ((0, 255, 0)))
+                    else:
+                        blit_text_center(surface, grid.grid_details['cell_size'][0]/2, grid.grid_details['cell_size'][1]/4*3, 'Launched: No', 20, ((255, 0, 0)))
 
         pygame.draw.rect(surface, (255, 255, 255), pygame.Rect((0, 0), grid.grid_details['cell_size']), 2)
     grid.draw_surfaces()

@@ -140,9 +140,21 @@ class ESPMGMT():
         payload[0] -= 1
         print('Launch firework called')
         self.pins.pin_data[payload[0]]['state'] = 1
-        self.pins.pin_data[payload[0]]['launched'] = True
+        self.pins.pin_data[payload[0]]['launched'] = payload[1]
         time.sleep(0.5)
         self.pins.pin_data[payload[0]]['state'] = 0
+    
+    def run_step(self, payload):
+        x = 0
+        for firework in payload[0]:
+            firework -= 1
+            self.pins.pin_data[firework]['state'] = 1
+            self.pins.pin_data[firework]['launched'] = payload[1][x]
+            x += 1
+        time.sleep(0.5)
+        for firework in payload[0]:
+            firework -= 1
+            self.pins.pin_data[firework]['state'] = 0
 
     def create_port_(self):
         self.send_obj.bind(('0.0.0.0', 4444))
@@ -176,3 +188,5 @@ class ESPMGMT():
                         self.pins.armed = True
                     elif read['code'] == 3:
                         self.pins.armed = False
+                    elif read['code'] == 4:
+                        threading.Thread(target=self.run_step, args=[read['payload']]).start()
