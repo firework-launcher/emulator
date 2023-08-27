@@ -11,17 +11,19 @@ import socket
 mappings = [4, 3, 2, 1, 8, 7, 6, 5, 12, 11, 10, 9, 16, 15, 14, 13]
 
 def handle_serialip_msgs(msg, pins):
-    read_full = msg.decode('utf-8').split('\r\n')
-    for read in read_full:
-        if read.startswith('/digital'):
-            pin = str(int(msg.split('/')[2])-1)
-            state = int(msg.split('/')[3].replace('\r\n', ''))
-            pins.pin_data[int(pin)-1]['state'] = state
-            if state == 0:
-                pins.pin_data[int(pin)-1]['launched'] = True
-            return b'{"message": "Pin D' + pin.encode() + b' set to ' + str(state).encode() + b'", "id": "2", "name": "serial", "hardware": "emulator", "connected": true}'
-        else:
-            return b'{"message": "Failed to set pin", "id": "2", "name": "serial", "hardware": "emulator", "connected": true}'
+    if not msg == None:
+        msg = msg.decode('utf-8')
+        read_full = msg.split('\r\n')
+        for read in read_full:
+            if read.startswith('/digital'):
+                pin = str(int(msg.split('/')[2])-1)
+                state = int(msg.split('/')[3].replace('\r\n', ''))
+                pins.pin_data[int(pin)-1]['state'] = state
+                if state == 0:
+                    pins.pin_data[int(pin)-1]['launched'] = True
+                return b'{"message": "Pin D' + pin.encode() + b' set to ' + str(state).encode() + b'", "id": "2", "name": "serial", "hardware": "emulator", "connected": true}'
+            else:
+                return b'{"message": "Failed to set pin", "id": "2", "name": "serial", "hardware": "emulator", "connected": true}'
 
 def get_inputs(pin_data):
     data = ''
@@ -74,9 +76,10 @@ class SerialMGMT:
         self.top_msg = 'Serial Port: {}'.format(self.port)
         return self.port
     def check_read(self):
-        handle_serialip_msgs(self.master_file.read(), self.pins)
+        self.write_data(handle_serialip_msgs(self.master_file.read(), self.pins))
     def write_data(self, data):
-        self.master_file.write(data) 
+        if not data == None:
+            self.master_file.write(data)
 
 class IPMGMT():
     def __init__(self, pins):
@@ -109,7 +112,7 @@ class IPMGMT():
     def check_read(self):
         newest_read = self.newest_read
         self.newest_read = None
-        handle_serialip_msgs(newest_read, self.pins)
+        self.write_data(handle_serialip_msgs(newest_read, self.pins))
     def write_data(self, data):
         self.data_to_write = data
 
