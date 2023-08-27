@@ -1,4 +1,4 @@
-import serial_mgmt
+import emulator_io
 import argparse
 import pygame
 import time
@@ -7,23 +7,34 @@ import os
 import grid_mgmt
 
 
-serial_or_ip = input('Serial (s) or IP launcher (ip)?: ')
-port_count = int(input('Port count: '))
-if serial_or_ip == 's':
-    serial = serial_mgmt.SerialMGMT()
-elif serial_or_ip == 'ip':
-    serial = serial_mgmt.IPMGMT()
+emutype = input('Serial (s), ESP Node (esp), or IP launcher (ip)?: ')
+port_count = 16 if emutype == 'esp' else int(input('Port count: '))
+
+class PinData:
+    def __init__(self, armed):
+        self.pin_data = []
+        self.armed = armed
+
+pins = PinData(not emutype == 'esp')
+
+if emutype == 's':
+    emulator = emulator_io.SerialMGMT(pins)
+elif emutype == 'ip':
+    emulator = emulator_io.IPMGMT(pins)
+elif emutype == 'esp':
+    emulator = emulator_io.ESPMGMT(pins)
 else:
     print('Invalid option')
     exit(1)
-serial.create_port()
-pin_data = []
+
+emulator.create_port()
 
 for pin in range(port_count):
     pin += 1
-    pin_data.append({
+    pins.pin_data.append({
         'pin': pin,
-        'state': 1,
+        'state': 0 if emutype == 'esp' else 1,
+        'on': True,
         'launched': False
     })
 
@@ -66,15 +77,17 @@ def reset_button(x, y, pressed=False):
             pygame.draw.rect(display, color_hover, pygame.Rect(x-w/2, y-h/2, w, h))
             blit_text_center(display, x, y, 'Reset', 40, color_fg_hover)
         else:
-            global pin_data
-            pin_data = []
+            pins.pin_data = []
             for pin in range(port_count):
                 pin += 1
-                pin_data.append({
+
+                pins.pin_data.append({
                     'pin': pin,
-                    'state': 1,
+                    'state': 0 if emutype == 'esp' else 1,
+                    'on': True,
                     'launched': False
                 })
+
             print('Pin Data Reset')
     else:
         if not pressed:
@@ -87,44 +100,32 @@ pygame.font.init()
 display = pygame.display.set_mode((800, 600))
 clock = pygame.time.Clock()
 
-grid = grid_mgmt.GridMGMT(pygame, display, 100)
+grid = grid_mgmt.GridMGMT(pygame, display, 100, emutype, pins)
 grid.create_surfaces(port_count)
 
 while running:
     clock.tick(60)
     display.fill((64, 64, 64))
     width, height = pygame.display.get_surface().get_size()
-    read = serial.check_read()
-    if serial_or_ip == 's':
-        blit_text_center(display, width/2, 30, 'Serial Port: {}'.format(serial.port), 30, (255, 255, 255))
-    else:
-        blit_text_center(display, width/2, 30, 'IP: {}'.format(serial_mgmt.socket.gethostbyname(serial_mgmt.socket.gethostname())), 30, (255, 255, 255))
+    emulator.check_read()
+    blit_text_center(display, width/2, 30, emulator.top_msg, 30, (255, 255, 255))
     reset_button(width/2, 60)
+
     for box in grid.box_surfaces:
         surface = grid.box_surfaces[box]
         surface.fill((64, 64, 64))
-        blit_text_center(surface, grid.grid_details['cell_size'][0]/2, grid.grid_details['cell_size'][1]/4, 'Pin {}'.format(box[2]), 30, ((255, 255, 255)))
-        blit_text_center(surface, grid.grid_details['cell_size'][0]/2, grid.grid_details['cell_size'][1]/4*2, 'State: {}'.format(pin_data[box[2]-1]['state']), 30, ((255, 255, 255)))
-        launched = pin_data[box[2]-1]['launched']
-        if launched:
-            blit_text_center(surface, grid.grid_details['cell_size'][0]/2, grid.grid_details['cell_size'][1]/4*3, 'Launched: Yes', 20, ((0, 255, 0)))
-        else:
-            blit_text_center(surface, grid.grid_details['cell_size'][0]/2, grid.grid_details['cell_size'][1]/4*3, 'Launched: No', 20, ((255, 0, 0)))
+        if pins.pin_data[box[2]-1]['on']:
+            blit_text_center(surface, grid.grid_details['cell_size'][0]/2, grid.grid_details['cell_size'][1]/4, 'Pin {}'.format(box[2]), 30, ((255, 255, 255)))
+            if pins.armed:
+                blit_text_center(surface, grid.grid_details['cell_size'][0]/2, grid.grid_details['cell_size'][1]/4*2, 'State: {}'.format(pins.pin_data[box[2]-1]['state']), 30, ((255, 255, 255)))
+                launched = pins.pin_data[box[2]-1]['launched']
+                if launched:
+                    blit_text_center(surface, grid.grid_details['cell_size'][0]/2, grid.grid_details['cell_size'][1]/4*3, 'Launched: Yes', 20, ((0, 255, 0)))
+                else:
+                    blit_text_center(surface, grid.grid_details['cell_size'][0]/2, grid.grid_details['cell_size'][1]/4*3, 'Launched: No', 20, ((255, 0, 0)))
 
         pygame.draw.rect(surface, (255, 255, 255), pygame.Rect((0, 0), grid.grid_details['cell_size']), 2)
     grid.draw_surfaces()
-    if not read == None:
-        read_full = read.decode('utf-8').split('\r\n')
-        for read in read_full:
-            if read.startswith('/digital'):
-                pin = str(int(read.split('/')[2])-1)
-                state = int(read.split('/')[3].replace('\r\n', ''))
-                pin_data[int(pin)-1]['state'] = state
-                if state == 0:
-                    pin_data[int(pin)-1]['launched'] = True
-                serial.write_data(b'{"message": "Pin D' + pin.encode() + b' set to ' + str(state).encode() + b'", "id": "2", "name": "serial", "hardware": "emulator", "connected": true}')
-            else:
-                serial.write_data(b'{"message": "Failed to set pin", "id": "2", "name": "serial", "hardware": "emulator", "connected": true}')
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -132,6 +133,7 @@ while running:
             grid.create_surfaces(port_count, (event.w, event.h))
         if event.type == pygame.MOUSEBUTTONDOWN:
             reset_button(width/2, 60, pressed=True)
+            grid.mousepress()
     pygame.display.update()
 
 os.kill(os.getpid(), 9)

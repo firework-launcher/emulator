@@ -1,12 +1,14 @@
 import math
 
 class GridMGMT:
-    def __init__(self, pygame, display, y_offset):
+    def __init__(self, pygame, display, y_offset, emutype, pins):
         self.pygame = pygame
         self.display = display
         self.y_offset = y_offset
         self.grid_details = None
         self.box_surfaces = {}
+        self.emutype = emutype
+        self.pins = pins
     
     def closest_factors(self, num):
         factors = []
@@ -61,3 +63,27 @@ class GridMGMT:
     def draw_surfaces(self):
         for data in self.box_surfaces:
             self.display.blit(self.box_surfaces[data], (data[3], data[4]))
+
+    def get_pin_from_grid(self, row, col):
+        for data in self.box_surfaces:
+            if data[0] == row and data[1] == col:
+                pin = data[2]
+                return pin
+
+    def mousepress(self):
+        if self.emutype == 'esp':
+            mouse_pos = self.pygame.mouse.get_pos()
+            mouse_x, mouse_y = mouse_pos
+            
+            if mouse_y < self.y_offset:
+                return
+
+            cell_width, cell_height = self.grid_details['cell_size']
+            row = (mouse_y - self.y_offset) // cell_height
+            col = mouse_x // cell_width
+
+            if row >= self.grid_details['num_rows'] or col >= self.grid_details['num_cols']:
+                return
+            
+            pin = self.get_pin_from_grid(row, col)
+            self.pins.pin_data[pin-1]['on'] = not self.pins.pin_data[pin-1]['on']
